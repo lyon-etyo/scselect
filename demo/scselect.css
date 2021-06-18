@@ -1,7 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
 
-/* Styles for component */
-
+/* Styles for wrapper scselect component */
 .scselect {
   --color-primary: #845ec2;
   --color-accent: #eee;
@@ -13,6 +12,7 @@
   width: clamp(10.5rem, calc(32vw), 14.5rem);
 }
 
+/* Styles for header or selected value */
 .scselect__header {
   background: #eee;
   margin-bottom: 0.5em;
@@ -24,11 +24,10 @@
   user-select: none;
   transition: all 300ms ease;
 }
-
 .scselect:focus > .scselect__header {
   outline: 1px solid #333;
 }
-
+/* Triangle beside of selected value in header */
 .scselect__header::after {
   content: "";
   position: absolute;
@@ -43,11 +42,12 @@
   transform-origin: 50% 25%;
   transition: transform 300ms ease;
 }
-
+/* Rotate triangle when scselect open */
 .scselect[data-open] > .scselect__header::after {
   transform: rotate(180deg);
 }
 
+/* Styles for container of options */
 .scselect__options-container {
   background: #ddd;
   border-radius: 1rem;
@@ -65,17 +65,16 @@
   width: 100%;
   z-index: 2;
 }
-
+/* Custom scrollbar for container of option */
 .scselect__options-container::-webkit-scrollbar {
   width: 0.5rem;
 }
-
 .scselect__options-container::-webkit-scrollbar-thumb {
   background: #666;
   overflow: hidden;
   border-radius: 1rem;
 }
-
+/* Container of options will be visible and have height when scselect open */
 .scselect[data-open] > .scselect__options-container {
   max-height: 10rem;
   opacity: 1;
@@ -83,20 +82,18 @@
   scrollbar-width: none;
 }
 
+/* Styles for option */
 .scselect__option {
   padding: 0.6em 0.8em;
 }
-
 .scselect__option:not(.selected):is(:hover, :focus) {
   background: #fafafa;
 }
-
 .scselect__option.selected-multi:not(.selected)::after {
   content: "\02713";
   position: absolute;
   right: 0.4em;
 }
-
 .scselect__option.selected:not(.selected-multi) {
   background: #eee;
   font-weight: bold;
