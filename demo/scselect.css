@@ -1,0 +1,103 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto&display=swap");
+
+/* Styles for component */
+
+.scselect {
+  --color-primary: #845ec2;
+  --color-accent: #eee;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  position: relative;
+  width: clamp(10.5rem, calc(32vw), 14.5rem);
+}
+
+.scselect__header {
+  background: #eee;
+  margin-bottom: 0.5em;
+  border-radius: 1rem;
+  position: relative;
+  padding: 0.6em 0.8em;
+  padding-right: 2em;
+  cursor: pointer;
+  user-select: none;
+  transition: all 300ms ease;
+}
+
+.scselect:focus > .scselect__header {
+  outline: 1px solid #333;
+}
+
+.scselect__header::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0.8em;
+  width: 0;
+  height: 0;
+  border-left: 0.4em solid transparent;
+  border-right: 0.4em solid transparent;
+  border-top: 0.4em solid #333;
+  transform: rotateX(0deg) translateY(-50%);
+  transform-origin: 50% 25%;
+  transition: transform 300ms ease;
+}
+
+.scselect[data-open] > .scselect__header::after {
+  transform: rotate(180deg);
+}
+
+.scselect__options-container {
+  background: #ddd;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  max-height: 0;
+  padding: 0;
+  opacity: 0;
+  overflow-y: hidden;
+  position: absolute;
+  top: 100%;
+  transition: 400ms ease;
+  width: 100%;
+  z-index: 2;
+}
+
+.scselect__options-container::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+.scselect__options-container::-webkit-scrollbar-thumb {
+  background: #666;
+  overflow: hidden;
+  border-radius: 1rem;
+}
+
+.scselect[data-open] > .scselect__options-container {
+  max-height: 10rem;
+  opacity: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.scselect__option {
+  padding: 0.6em 0.8em;
+}
+
+.scselect__option:not(.selected):is(:hover, :focus) {
+  background: #fafafa;
+}
+
+.scselect__option.selected-multi:not(.selected)::after {
+  content: "\02713";
+  position: absolute;
+  right: 0.4em;
+}
+
+.scselect__option.selected:not(.selected-multi) {
+  background: #eee;
+  font-weight: bold;
+}
