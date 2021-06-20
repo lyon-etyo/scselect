@@ -104,10 +104,31 @@ export default class SCSelect {
     const newSelectedOption = this.options.find(option => option.value === value);
     if (!newSelectedOption) return;
 
+    if (this.element.multiple) {
+      // get index of clicked option in selectedOption
+      const newInSelectedOptionIndex = this.selectedOption.indexOf(newSelectedOption);
+      // if clicked option is already in selectedOption then make it unselected and
+      // return an array with newSelectedOption and null
+      if (newInSelectedOptionIndex > -1) {
+        newSelectedOption.selected = false;
+        newSelectedOption.element.selected = false;
+        return [newSelectedOption, null];
+      }
+      // otherwise add it to selectedOption
+      this.selectedOption.push(newSelectedOption);
+      // change newSelectedOption to be current selected
+      newSelectedOption.selected = true;
+      newSelectedOption.element.selected = true;
+      // return an array with null and newSelectedOption
+      return [null, newSelectedOption];
+    }
+
     //  get current selected option then make it as previous selected
     //  by reference it to previousSelectedOption
     const previousSelectedOption = this.selectedOption;
 
+    // return if newSelectedOption is same as previousSelectedOption
+    if (newSelectedOption.value === previousSelectedOption.value) return;
     // change previousSelectedOption to be not selected anymore
     previousSelectedOption.selected = false;
     previousSelectedOption.element.selected = false;
@@ -115,7 +136,7 @@ export default class SCSelect {
     // change newSelectedOption to be current selected
     newSelectedOption.selected = true;
     newSelectedOption.element.selected = true;
-
+    // return an array with previousSelectedOption and newSelectedOption
     return [previousSelectedOption, newSelectedOption];
   }
 }
@@ -131,8 +152,12 @@ function init(scselect) {
   let searchTerm = "";
   // inner helper function to select option then render to the DOM
   const selectAndRender = value => {
-    const [previousSelected, currentSelected] = scselect.selectValue(value);
-    renderSelectedValue(scselect, previousSelected, currentSelected);
+    try {
+      const [previousSelected, currentSelected] = scselect.selectValue(value);
+      renderSelectedValue(scselect, previousSelected, currentSelected);
+    } catch (error) {
+      return;
+    }
   };
 
   // initial render selected value or just show placeholder
@@ -171,28 +196,35 @@ function init(scselect) {
         this.toggleAttribute("data-open");
         break;
       }
-      case "Enter":
+      case "Enter": {
+        if (scselect.element.multiple) break;
+      }
+
       case "Escape": {
         this.toggleAttribute("data-open", false);
         this.blur();
         break;
       }
       case "ArrowUp": {
+        if (scselect.element.multiple) break;
         const previousOption = scselect.options[scselect.selectedOptionIndex - 1];
         if (previousOption) selectAndRender(previousOption.value);
         break;
       }
       case "ArrowDown": {
+        if (scselect.element.multiple) break;
         const nextOption = scselect.options[scselect.selectedOptionIndex + 1];
         if (nextOption) selectAndRender(nextOption.value);
         break;
       }
       case "End": {
+        if (scselect.element.multiple) break;
         const last = scselect.options[scselect.options.length - 1];
         selectAndRender(last.value);
         break;
       }
       case "Home": {
+        if (scselect.element.multiple) break;
         const first = scselect.options[0];
         selectAndRender(first.value);
         break;
@@ -204,15 +236,14 @@ function init(scselect) {
         searchTerm += event.key;
         // if user within 500ms not typing anything reset searchTerm
         debounceTimeout = setTimeout(() => {
+          // searching an option that label start with searchTerm
+          const searchedOption = scselect.options.find(option => {
+            return option.label.toLowerCase().startsWith(searchTerm);
+          });
+          // if searchedOption is not empty then select its value and render to the DOM
+          if (searchedOption) selectAndRender(searchedOption.value);
           searchTerm = "";
         }, 500);
-
-        // searching an option that label start with searchTerm
-        const searchedOption = scselect.options.find(option => {
-          return option.label.toLowerCase().startsWith(searchTerm);
-        });
-        // if searchedOption is not empty then select its value and render to the DOM
-        if (searchedOption) selectAndRender(searchedOption.value);
         break;
       }
     }
@@ -245,24 +276,58 @@ function getFormattedOptions(optionElements) {
 function renderSelectedValue(scselect, previous = null, current = null) {
   // header text scselect
   const headerTextElement = scselect.headerElement.children[0];
+  // selected class name determined by scselect.element.multiple
+  const selectedClass = scselect.element.multiple ? "selected-multi" : "selected";
+  // placeholder text for first initial render if no item selected yet
+  const placeholder = scselect.element.dataset.placeholder;
+  // empty text when no item selected in multiple type
+  const empty = "No item selected";
+
   // if no previous and current then header text scselect is placeholder or first option label
   if (!previous && !current) {
-    const placeholder = scselect.element.dataset.placeholder;
-    headerTextElement.textContent = placeholder || scselect.options[0].label;
+    headerTextElement.textContent = placeholder || scselect.selectedOption[0]?.label || empty;
     return;
   }
-  // remove .selected from previous selected option element
-  scselect.optionsContainerElement
-    .querySelector(`[data-value="${previous.value}"]`)
-    .classList.remove("selected");
-  // get current selected option element
-  const newSelectedOptionElement = scselect.optionsContainerElement.querySelector(
-    `[data-value="${current.value}"]`
-  );
-  // add .selected to current selected option element
-  newSelectedOptionElement.classList.add("selected");
-  // always get view to this option element
-  newSelectedOptionElement.scrollIntoView({ block: "nearest" });
+  // if previous not null, remove selectedClass from previous selected option element
+  if (previous) {
+    scselect.optionsContainerElement
+      .querySelector(`[data-value="${previous.value}"]`)
+      .classList.remove(selectedClass);
+  }
+
+  // if current not null, get current selected option element and add selectedClass to it
+  if (current) {
+    // get current selected option element
+    const newSelectedOptionElement = scselect.optionsContainerElement.querySelector(
+      `[data-value="${current.value}"]`
+    );
+    // add .selected to current selected option element
+    newSelectedOptionElement.classList.add(selectedClass);
+    // always get view to this option element
+    newSelectedOptionElement.scrollIntoView({ block: "nearest" });
+  }
+
+  // if type is multiple
+  if (scselect.element.multiple) {
+    // get all label off selectedOption
+    const selectedOptionLabels = scselect.selectedOption.map(option => option.label);
+    // transform all label into formatted string strSelected
+    const strSelected = selectedOptionLabels.join(", ");
+    // if no selectedOptionLabels exist, header text is placeholder or empty text then return
+    if (selectedOptionLabels.length < 1) {
+      headerTextElement.textContent = placeholder || empty;
+      return;
+    }
+    // if strSelected characters more than 25, label is shorten then return
+    if (strSelected.length > 25) {
+      headerTextElement.textContent = `${selectedOptionLabels.length} items selected`;
+      return;
+    }
+    // otherwise header text is strSelected then return
+    headerTextElement.textContent = strSelected;
+    return;
+  }
+
   // change header text scselect with label of current selected option element
-  scselect.headerElement.children[0].textContent = current.label;
+  headerTextElement.textContent = current.label;
 }
