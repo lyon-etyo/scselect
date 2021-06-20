@@ -24,12 +24,8 @@ export default class SCSelect {
   constructor(element) {
     this.element = element;
     this.options = getFormattedOptions(this.element.options);
-
-    // Create DOMParser
-    const parser = new DOMParser();
-    // Parse template
-    const htmlDocument = parser.parseFromString(this.template, "text/html");
-    this.customElement = htmlDocument.querySelector(".scselect");
+    this.template = template;
+    this.customElement = this.htmlDocument.querySelector(".scselect");
     // Hide original select
     element.style.display = "none";
     // Insert scselect element after original select element
@@ -63,13 +59,26 @@ export default class SCSelect {
   }
 
   /**
-   * Getter for getting template custom element
+   * Setter for template
+   * transform domstring into hmtl document
    *
-   * @readonly
+   * @memberof SCSelect
+   */
+  set template(domstring) {
+    // Create DOMParser
+    const parser = new DOMParser();
+    // Parse template
+    this.htmlDocument = parser.parseFromString(domstring, "text/html");
+  }
+
+  /**
+   * Getter for template
+   * get domstring template that used in class
+   *
    * @memberof SCSelect
    */
   get template() {
-    return template;
+    return this.htmlDocument;
   }
 
   /**
@@ -127,8 +136,6 @@ export default class SCSelect {
     //  by reference it to previousSelectedOption
     const previousSelectedOption = this.selectedOption;
 
-    // return if newSelectedOption is same as previousSelectedOption
-    if (newSelectedOption.value === previousSelectedOption.value) return;
     // change previousSelectedOption to be not selected anymore
     previousSelectedOption.selected = false;
     previousSelectedOption.element.selected = false;
